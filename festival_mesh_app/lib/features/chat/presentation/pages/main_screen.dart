@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:auto_route/auto_route.dart';
 import '../bloc/chat_bloc.dart';
 import '../widgets/chat_details.dart';
+import '../../data/datasources/chat_remote_data_source.dart';
+import 'package:get_it/get_it.dart';
 import 'package:festival_mesh_app/core/router/app_router.dart';
 
 @RoutePage()
@@ -80,10 +82,63 @@ class _MainScreenState extends State<MainScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.blue.shade800,
-        onPressed: () {
-          context.read<ChatBloc>().add(ChatEvent.handshakeSent("Peer_${DateTime.now().minute}"));
-        },
+        onPressed: () => _showDiscoveryOptions(context),
         child: const Icon(Icons.bluetooth_searching, color: Colors.white),
+      ),
+    );
+  }
+
+  void _showDiscoveryOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.person_add),
+            title: const Text("Enter Peer Name"),
+            onTap: () {
+               Navigator.pop(context);
+               _showHandshakeDialog(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.bug_report),
+            title: const Text("Spawn Virtual Peer (Self-Test)"),
+            onTap: () {
+               Navigator.pop(context);
+               GetIt.instance<ChatDataSource>().spawnMockPeer();
+            },
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  void _showHandshakeDialog(BuildContext context) {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Connect to Peer"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: "Enter Peer Name (e.g. Bob)"),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () {
+              if (controller.text.isNotEmpty) {
+                context.read<ChatBloc>().add(ChatEvent.handshakeSent(controller.text));
+                Navigator.pop(context);
+              }
+            },
+            child: const Text("Connect"),
+          ),
+        ],
       ),
     );
   }

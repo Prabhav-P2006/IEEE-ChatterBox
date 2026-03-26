@@ -1,7 +1,12 @@
 #include "MeshEngine.h"
 #include "SecurityManager.h"
 
-#include <sodium.h>
+// Libsodium symbols provided by SecurityManager
+extern "C" {
+    int sodium_init();
+    void randombytes_buf(void * const buf, const size_t size);
+}
+
 #include <iostream>
 #include <map>
 #include <set>
@@ -94,7 +99,9 @@ struct MeshEngine::Impl {
     }
 
     uint32_t freshId() {
-        uint32_t id; randombytes_buf(&id, sizeof(id)); id &= 0xFFFFFF;
+        uint32_t id; 
+        randombytes_buf(&id, sizeof(id)); 
+        id &= 0xFFFFFF;
         shouldProcess(id); // pre-mark so we don't relay our own
         return id;
     }
@@ -112,7 +119,9 @@ struct MeshEngine::Impl {
 
 MeshEngine::MeshEngine(std::string nodeName)
     : impl_(std::make_unique<Impl>()) {
+#ifndef DUMMY_CRYPTO
     if (sodium_init() < 0) throw std::runtime_error("sodium_init failed");
+#endif
     impl_->name = std::move(nodeName);
 }
 
@@ -152,7 +161,11 @@ std::vector<std::vector<uint8_t>> MeshEngine::buildMessage(const std::string& de
 
     auto encrypted = ses.encrypt(text);
 
-    const size_t CHUNK = 180; // Safe for BT5.0 Extended Advertising
+#ifdef DUMMY_CRYPTO
+    const size_t CHUNK = 20; // Safe for any legacy Bluetooth 4.0 advertisement
+#else
+    const size_t CHUNK = 180; // Optimized for BT5.0 Extended Advertising
+#endif
     uint32_t gid = impl_->freshId();
     uint8_t total = (uint8_t)((encrypted.size() + CHUNK - 1) / CHUNK);
 

@@ -37,13 +37,14 @@ class BleTransport {
       for (ScanResult r in results) {
         final manufacturerData = r.advertisementData.manufacturerData;
         if (manufacturerData.containsKey(companyId)) {
-          onDataReceived(manufacturerData[companyId]!);
+          final data = manufacturerData[companyId]!;
+          debugPrint("📡 [BLE MESH] Incoming: ${data.length} bytes from ${r.device.remoteId}");
+          onDataReceived(data);
         }
       }
     });
 
     await FlutterBluePlus.startScan(
-      withKeywords: ["Festival"],
       androidScanMode: AndroidScanMode.lowLatency,
     );
   }

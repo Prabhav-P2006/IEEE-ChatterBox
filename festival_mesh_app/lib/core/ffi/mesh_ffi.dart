@@ -44,8 +44,8 @@ class MeshFFI {
   late MeshGetPublicKeyHex getPublicKeyHex;
   late MeshGetSafetyNumber getSafetyNumber;
 
-  MeshFFI() {
-    _lib = _loadLibrary();
+  MeshFFI({String? libraryPath}) {
+    _lib = _loadLibrary(libraryPath);
 
     create = _lib.lookupFunction<NativeMeshCreate, MeshCreate>('mesh_create');
     destroy = _lib.lookupFunction<NativeMeshDestroy, MeshDestroy>('mesh_destroy');
@@ -59,7 +59,8 @@ class MeshFFI {
     getSafetyNumber = _lib.lookupFunction<NativeMeshGetSafetyNumber, MeshGetSafetyNumber>('mesh_get_safety_number');
   }
 
-  DynamicLibrary _loadLibrary() {
+  DynamicLibrary _loadLibrary(String? path) {
+    if (path != null) return DynamicLibrary.open(path);
     if (Platform.isAndroid) return DynamicLibrary.open('libfestivalmesh.so');
     if (Platform.isIOS) return DynamicLibrary.process();
     if (Platform.isLinux) return DynamicLibrary.open('libfestivalmesh.so');

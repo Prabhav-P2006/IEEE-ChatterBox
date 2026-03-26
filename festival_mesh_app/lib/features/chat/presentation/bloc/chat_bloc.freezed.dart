@@ -661,7 +661,7 @@ mixin _$ChatState {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(
-            List<ChatContact> chats, String myId, String? error)
+            List<ChatContact> chats, String myId, String myName, String? error)
         loaded,
   }) =>
       throw _privateConstructorUsedError;
@@ -669,7 +669,8 @@ mixin _$ChatState {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<ChatContact> chats, String myId, String? error)?
+    TResult? Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
   }) =>
       throw _privateConstructorUsedError;
@@ -677,7 +678,8 @@ mixin _$ChatState {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<ChatContact> chats, String myId, String? error)?
+    TResult Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
     required TResult orElse(),
   }) =>
@@ -764,7 +766,7 @@ class _$ChatInitialImpl implements ChatInitial {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(
-            List<ChatContact> chats, String myId, String? error)
+            List<ChatContact> chats, String myId, String myName, String? error)
         loaded,
   }) {
     return initial();
@@ -775,7 +777,8 @@ class _$ChatInitialImpl implements ChatInitial {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<ChatContact> chats, String myId, String? error)?
+    TResult? Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
   }) {
     return initial?.call();
@@ -786,7 +789,8 @@ class _$ChatInitialImpl implements ChatInitial {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<ChatContact> chats, String myId, String? error)?
+    TResult Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
     required TResult orElse(),
   }) {
@@ -876,7 +880,7 @@ class _$ChatLoadingImpl implements ChatLoading {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(
-            List<ChatContact> chats, String myId, String? error)
+            List<ChatContact> chats, String myId, String myName, String? error)
         loaded,
   }) {
     return loading();
@@ -887,7 +891,8 @@ class _$ChatLoadingImpl implements ChatLoading {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<ChatContact> chats, String myId, String? error)?
+    TResult? Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
   }) {
     return loading?.call();
@@ -898,7 +903,8 @@ class _$ChatLoadingImpl implements ChatLoading {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<ChatContact> chats, String myId, String? error)?
+    TResult Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
     required TResult orElse(),
   }) {
@@ -953,7 +959,8 @@ abstract class _$$ChatLoadedImplCopyWith<$Res> {
           _$ChatLoadedImpl value, $Res Function(_$ChatLoadedImpl) then) =
       __$$ChatLoadedImplCopyWithImpl<$Res>;
   @useResult
-  $Res call({List<ChatContact> chats, String myId, String? error});
+  $Res call(
+      {List<ChatContact> chats, String myId, String myName, String? error});
 }
 
 /// @nodoc
@@ -969,6 +976,7 @@ class __$$ChatLoadedImplCopyWithImpl<$Res>
   $Res call({
     Object? chats = null,
     Object? myId = null,
+    Object? myName = null,
     Object? error = freezed,
   }) {
     return _then(_$ChatLoadedImpl(
@@ -979,6 +987,10 @@ class __$$ChatLoadedImplCopyWithImpl<$Res>
       myId: null == myId
           ? _value.myId
           : myId // ignore: cast_nullable_to_non_nullable
+              as String,
+      myName: null == myName
+          ? _value.myName
+          : myName // ignore: cast_nullable_to_non_nullable
               as String,
       error: freezed == error
           ? _value.error
@@ -992,7 +1004,10 @@ class __$$ChatLoadedImplCopyWithImpl<$Res>
 
 class _$ChatLoadedImpl implements ChatLoaded {
   const _$ChatLoadedImpl(
-      {required final List<ChatContact> chats, required this.myId, this.error})
+      {required final List<ChatContact> chats,
+      required this.myId,
+      required this.myName,
+      this.error})
       : _chats = chats;
 
   final List<ChatContact> _chats;
@@ -1006,11 +1021,13 @@ class _$ChatLoadedImpl implements ChatLoaded {
   @override
   final String myId;
   @override
+  final String myName;
+  @override
   final String? error;
 
   @override
   String toString() {
-    return 'ChatState.loaded(chats: $chats, myId: $myId, error: $error)';
+    return 'ChatState.loaded(chats: $chats, myId: $myId, myName: $myName, error: $error)';
   }
 
   @override
@@ -1020,12 +1037,13 @@ class _$ChatLoadedImpl implements ChatLoaded {
             other is _$ChatLoadedImpl &&
             const DeepCollectionEquality().equals(other._chats, _chats) &&
             (identical(other.myId, myId) || other.myId == myId) &&
+            (identical(other.myName, myName) || other.myName == myName) &&
             (identical(other.error, error) || other.error == error));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType, const DeepCollectionEquality().hash(_chats), myId, error);
+  int get hashCode => Object.hash(runtimeType,
+      const DeepCollectionEquality().hash(_chats), myId, myName, error);
 
   @JsonKey(ignore: true)
   @override
@@ -1039,10 +1057,10 @@ class _$ChatLoadedImpl implements ChatLoaded {
     required TResult Function() initial,
     required TResult Function() loading,
     required TResult Function(
-            List<ChatContact> chats, String myId, String? error)
+            List<ChatContact> chats, String myId, String myName, String? error)
         loaded,
   }) {
-    return loaded(chats, myId, error);
+    return loaded(chats, myId, myName, error);
   }
 
   @override
@@ -1050,10 +1068,11 @@ class _$ChatLoadedImpl implements ChatLoaded {
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? initial,
     TResult? Function()? loading,
-    TResult? Function(List<ChatContact> chats, String myId, String? error)?
+    TResult? Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
   }) {
-    return loaded?.call(chats, myId, error);
+    return loaded?.call(chats, myId, myName, error);
   }
 
   @override
@@ -1061,12 +1080,13 @@ class _$ChatLoadedImpl implements ChatLoaded {
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? initial,
     TResult Function()? loading,
-    TResult Function(List<ChatContact> chats, String myId, String? error)?
+    TResult Function(
+            List<ChatContact> chats, String myId, String myName, String? error)?
         loaded,
     required TResult orElse(),
   }) {
     if (loaded != null) {
-      return loaded(chats, myId, error);
+      return loaded(chats, myId, myName, error);
     }
     return orElse();
   }
@@ -1110,10 +1130,12 @@ abstract class ChatLoaded implements ChatState {
   const factory ChatLoaded(
       {required final List<ChatContact> chats,
       required final String myId,
+      required final String myName,
       final String? error}) = _$ChatLoadedImpl;
 
   List<ChatContact> get chats;
   String get myId;
+  String get myName;
   String? get error;
   @JsonKey(ignore: true)
   _$$ChatLoadedImplCopyWith<_$ChatLoadedImpl> get copyWith =>

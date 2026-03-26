@@ -6,6 +6,7 @@ import 'features/chat/presentation/bloc/chat_bloc.dart';
 import 'core/router/app_router.dart';
 
 void main() async {
+  print('--- Festival Mesh App Starting ---');
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Hive

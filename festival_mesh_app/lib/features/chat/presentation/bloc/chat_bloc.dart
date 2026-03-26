@@ -5,6 +5,8 @@ import '../../domain/usecases/send_message.dart';
 import '../../domain/usecases/send_handshake.dart';
 import '../../domain/usecases/get_chats.dart';
 import '../../domain/usecases/get_identity.dart';
+import '../../data/datasources/chat_remote_data_source.dart';
+import '../../../../injection_container.dart' as di;
 import '../../../../core/usecases/usecase.dart';
 
 part 'chat_bloc.freezed.dart';
@@ -24,6 +26,7 @@ sealed class ChatState with _$ChatState {
   const factory ChatState.loaded({
     required List<ChatContact> chats,
     required String myId,
+    required String myName,
     String? error,
   }) = ChatLoaded;
 }
@@ -53,14 +56,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
 
     String myId = "Unknown";
     idResult.fold((l) => null, (r) => myId = r);
+    final String myName = (di.sl<ChatDataSource>() as MeshDataSourceImpl).myName;
 
     chatsResult.fold(
-      (l) => emit(ChatLoaded(chats: [], myId: myId, error: l.message)),
+      (l) => emit(ChatLoaded(chats: [], myId: myId, myName: myName, error: l.message)),
       (stream) {
         stream.listen((chats) {
           add(ChatChatsUpdated(chats));
         });
-        emit(ChatLoaded(chats: [], myId: myId));
+        emit(ChatLoaded(chats: [], myId: myId, myName: myName));
       },
     );
   }

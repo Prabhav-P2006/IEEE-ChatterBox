@@ -1,28 +1,41 @@
 #include "SecurityManager.h"
-#include <sodium.h>
-#include <stdexcept>
-#include <sstream>
+#include "monocypher.h"
 #include <iomanip>
+#include <sstream>
 #include <cstring>
+#include <random>
+#include <vector>
+
+extern "C" {
+    int sodium_init() { return 0; }
+    void randombytes_buf(void * const buf, const size_t size) {
+        std::random_device rd;
+        uint8_t* p = (uint8_t*)buf;
+        for (size_t i = 0; i < size; ++i) {
+            p[i] = static_cast<uint8_t>(rd());
+        }
+    }
+}
 
 namespace festival::mesh {
 
 struct SecurityManager::Impl {
-    unsigned char pk[crypto_kx_PUBLICKEYBYTES];
-    unsigned char sk[crypto_kx_SECRETKEYBYTES];
-    unsigned char rx[crypto_kx_SESSIONKEYBYTES]; // decrypt incoming
-    unsigned char tx[crypto_kx_SESSIONKEYBYTES]; // encrypt outgoing
+    uint8_t public_key[32];
+    uint8_t secret_key[32];
+    uint8_t session_key[32];
     bool has_session = false;
 
     Impl() {
-        if (sodium_init() < 0) throw std::runtime_error("sodium_init failed");
-        crypto_kx_keypair(pk, sk);
+        // Generate a random secret key
+        randombytes_buf(secret_key, 32);
+        crypto_x25519_public_key(public_key, secret_key);
     }
-    
-    Impl(const uint8_t* p, const uint8_t* s) {
-        if (sodium_init() < 0) throw std::runtime_error("sodium_init failed");
-        memcpy(pk, p, crypto_kx_PUBLICKEYBYTES);
-        memcpy(sk, s, crypto_kx_SECRETKEYBYTES);
+
+    Impl(const uint8_t* pk, const uint8_t* sk) {
+        std::memcpy(public_key, pk, 32);
+        std::memcpy(secret_key, sk, 32);
+        std::memset(session_key, 0, 32);
+        has_session = false; 
     }
 };
 
@@ -31,80 +44,104 @@ SecurityManager::SecurityManager() : impl_(std::make_unique<Impl>()) {}
 SecurityManager::SecurityManager(const uint8_t* pk, const uint8_t* sk) 
     : impl_(std::make_unique<Impl>(pk, sk)) {}
 
-SecurityManager::~SecurityManager() = default;
+SecurityManager::~SecurityManager() {
+    if (impl_) {
+        crypto_wipe(impl_->secret_key, 32);
+        crypto_wipe(impl_->session_key, 32);
+    }
+}
 
 SecurityManager::SecurityManager(SecurityManager&&) noexcept = default;
 SecurityManager& SecurityManager::operator=(SecurityManager&&) noexcept = default;
 
 std::vector<uint8_t> SecurityManager::getLocalPublicKey() const {
-    return {impl_->pk, impl_->pk + crypto_kx_PUBLICKEYBYTES};
+    return std::vector<uint8_t>(impl_->public_key, impl_->public_key + 32);
 }
 
 std::vector<uint8_t> SecurityManager::getLocalSecretKey() const {
-    return {impl_->sk, impl_->sk + crypto_kx_SECRETKEYBYTES};
+    return std::vector<uint8_t>(impl_->secret_key, impl_->secret_key + 32);
 }
 
 std::string SecurityManager::getLocalPublicKeyHex() const {
-    char hex[crypto_kx_PUBLICKEYBYTES * 2 + 1];
-    sodium_bin2hex(hex, sizeof(hex), impl_->pk, crypto_kx_PUBLICKEYBYTES);
-    return std::string(hex);
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    for (int i = 0; i < 32; ++i) {
+        ss << std::setw(2) << (int)impl_->public_key[i];
+    }
+    return ss.str();
 }
 
-void SecurityManager::computeSharedSecret(const std::vector<uint8_t>& peerKey) {
-    if (peerKey.size() != crypto_kx_PUBLICKEYBYTES)
-        throw std::runtime_error("Invalid peer key size");
+void SecurityManager::computeSharedSecret(const std::vector<uint8_t>& peerPublicKey) {
+    if (peerPublicKey.size() != 32) return;
 
-    // Deterministic role: smaller key = client, larger key = server
-    if (memcmp(impl_->pk, peerKey.data(), crypto_kx_PUBLICKEYBYTES) < 0)
-        crypto_kx_client_session_keys(impl_->rx, impl_->tx, impl_->pk, impl_->sk, peerKey.data());
-    else
-        crypto_kx_server_session_keys(impl_->rx, impl_->tx, impl_->pk, impl_->sk, peerKey.data());
+    uint8_t raw_shared[32];
+    crypto_x25519(raw_shared, impl_->secret_key, peerPublicKey.data());
 
-    impl_->has_session = true;
-}
-
-std::vector<uint8_t> SecurityManager::encrypt(const std::string& plain) {
-    if (!impl_->has_session) throw std::runtime_error("No session — handshake first");
-
-    // Layout: [24-byte nonce][ciphertext + 16-byte MAC]
-    std::vector<uint8_t> out(crypto_secretbox_NONCEBYTES + crypto_secretbox_MACBYTES + plain.size());
-    auto* nonce = out.data();
-    auto* ct    = out.data() + crypto_secretbox_NONCEBYTES;
-    randombytes_buf(nonce, crypto_secretbox_NONCEBYTES);
-    crypto_secretbox_easy(ct, (const uint8_t*)plain.data(), plain.size(), nonce, impl_->tx);
-    return out;
-}
-
-std::string SecurityManager::decrypt(const std::vector<uint8_t>& pkt) {
-    const size_t overhead = crypto_secretbox_NONCEBYTES + crypto_secretbox_MACBYTES;
-    if (pkt.size() <= overhead) throw std::runtime_error("Packet too short");
-    if (!impl_->has_session) throw std::runtime_error("No session");
-
-    size_t ct_len = pkt.size() - crypto_secretbox_NONCEBYTES;
-    std::string plain(ct_len - crypto_secretbox_MACBYTES, '\0');
-    if (crypto_secretbox_open_easy((uint8_t*)plain.data(),
-                                   pkt.data() + crypto_secretbox_NONCEBYTES,
-                                   ct_len, pkt.data(), impl_->rx) != 0)
-        throw std::runtime_error("Decryption failed — tampered or wrong key");
-    return plain;
-}
-
-bool SecurityManager::hasSession() const { return impl_->has_session; }
-
-std::string SecurityManager::getSafetyNumber() const {
-    if (!impl_->has_session) return "N/A";
+    // Derive a proper session key using Blake2b (uniform distribution)
+    crypto_blake2b(impl_->session_key, 32, raw_shared, 32);
     
-    // Combine RX and TX to make SN direction-independent (Alice.tx == Eve.rx, Alice.rx == Eve.tx)
-    unsigned char combined[crypto_kx_SESSIONKEYBYTES];
-    for (size_t i = 0; i < crypto_kx_SESSIONKEYBYTES; ++i) {
-        combined[i] = impl_->rx[i] ^ impl_->tx[i];
+    impl_->has_session = true;
+    crypto_wipe(raw_shared, 32);
+}
+
+std::vector<uint8_t> SecurityManager::encrypt(const std::string& plaintext) {
+    if (!impl_->has_session) return {};
+
+    uint8_t nonce[24];
+    randombytes_buf(nonce, 24);
+
+    size_t pt_len = plaintext.length();
+    // Output format: [NONCE 24][MAC 16][CIPHERTEXT PT_LEN]
+    std::vector<uint8_t> ciphertext(24 + 16 + pt_len);
+
+    std::memcpy(ciphertext.data(), nonce, 24);
+
+    crypto_aead_lock(
+        ciphertext.data() + 24 + 16,
+        ciphertext.data() + 24,
+        impl_->session_key,
+        nonce,
+        nullptr, 0,
+        (const uint8_t*)plaintext.c_str(), pt_len
+    );
+
+    return ciphertext;
+}
+
+std::string SecurityManager::decrypt(const std::vector<uint8_t>& ciphertext) {
+    if (!impl_->has_session || ciphertext.size() < (24 + 16)) return "";
+
+    const uint8_t* nonce = ciphertext.data();
+    const uint8_t* mac = ciphertext.data() + 24;
+    const uint8_t* ct = ciphertext.data() + 24 + 16;
+    size_t ct_len = ciphertext.size() - 24 - 16;
+
+    std::vector<uint8_t> plaintext(ct_len);
+    if (crypto_aead_unlock(
+        plaintext.data(),
+        mac,
+        impl_->session_key,
+        nonce,
+        nullptr, 0,
+        ct, ct_len
+    ) != 0) {
+        return ""; // Auth failed
     }
 
-    std::ostringstream ss;
-    for (int i = 0; i < 3; ++i) {
-        uint16_t chunk;
-        memcpy(&chunk, &combined[i * 2], 2);
-        ss << std::setw(5) << std::setfill('0') << (chunk % 100000) << (i < 2 ? " " : "");
+    return std::string((const char*)plaintext.data(), plaintext.size());
+}
+
+bool SecurityManager::hasSession() const {
+    return impl_->has_session;
+}
+
+std::string SecurityManager::getSafetyNumber() const {
+    auto pk = getLocalPublicKey();
+    std::stringstream ss;
+    ss << std::hex << std::setfill('0');
+    // Simple verification number: first 8 bytes of PK
+    for (int i = 0; i < 8; ++i) {
+        ss << std::setw(2) << (int)pk[i];
     }
     return ss.str();
 }
