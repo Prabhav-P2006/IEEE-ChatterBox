@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -rdynamic CMakeFiles/example.dir/example.cpp.o -o ../bin/example  -Wl,-rpath,/home/prabhav/bluez-dbus-cpp/build ../libbluez-dbus-cpp.so.0.0.1 /usr/lib/x86_64-linux-gnu/libsdbus-c++.so.1.1.0 /usr/lib/x86_64-linux-gnu/libcrypto.so -lsodium 

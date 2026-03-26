@@ -1,0 +1,1 @@
+/usr/bin/c++ -O3 -DNDEBUG -rdynamic CMakeFiles/test_mesh_logic.dir/example/test_mesh_logic.cpp.o -o test_mesh_logic  -Wl,-rpath,/home/prabhav/bluez-dbus-cpp/build libbluez-dbus-cpp.so.0.0.1 /usr/lib/x86_64-linux-gnu/libsdbus-c++.so.1.1.0 /usr/lib/x86_64-linux-gnu/libcrypto.so -lsodium 

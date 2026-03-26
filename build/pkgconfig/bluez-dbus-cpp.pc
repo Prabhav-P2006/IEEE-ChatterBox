@@ -1,0 +1,11 @@
+prefix=/usr/local
+exec_prefix=/usr/local
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: bluez-dbus-cpp
+Description: C++ library to address the BlueZ D-Bus API
+Requires: sdbus-c++
+Version: 0.0.1
+Libs: -L${libdir} -lbluez-dbus-cpp
+Cflags: -I${includedir}

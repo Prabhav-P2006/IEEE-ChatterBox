@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -O3 -DNDEBUG -shared -Wl,-soname,libfestivalmesh.so.1 -o libfestivalmesh.so.1.0.0 CMakeFiles/festivalmesh.dir/src/MeshEngine.cpp.o CMakeFiles/festivalmesh.dir/src/SecurityManager.cpp.o CMakeFiles/festivalmesh.dir/src/mesh_c_api.cpp.o  /usr/lib/x86_64-linux-gnu/libsodium.so 
