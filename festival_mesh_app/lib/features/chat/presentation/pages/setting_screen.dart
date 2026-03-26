@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:auto_route/auto_route.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:get_it/get_it.dart';
 import '../bloc/chat_bloc.dart';
 
 @RoutePage()
@@ -123,5 +125,3 @@ class SettingScreen extends StatelessWidget {
     );
   }
 }
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:get_it/get_it.dart';

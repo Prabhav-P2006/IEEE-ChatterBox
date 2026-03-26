@@ -12,7 +12,7 @@
 
 namespace festival::mesh {
 
-// ─── MeshPacket Wire Format ──────────────────────────────────────────────────
+// MeshPacket Wire Format
 
 std::vector<uint8_t> MeshPacket::serialize() const {
     std::vector<uint8_t> d;
@@ -43,7 +43,7 @@ MeshPacket MeshPacket::deserialize(const std::vector<uint8_t>& d) {
     return p;
 }
 
-// ─── MeshEngine Internal State ───────────────────────────────────────────────
+// MeshEngine Internal State
 
 struct MeshEngine::Impl {
     std::string name;
@@ -108,7 +108,7 @@ struct MeshEngine::Impl {
     }
 };
 
-// ─── MeshEngine Implementation ───────────────────────────────────────────────
+// MeshEngine Implementation
 
 MeshEngine::MeshEngine(std::string nodeName)
     : impl_(std::make_unique<Impl>()) {
@@ -177,7 +177,7 @@ void MeshEngine::processIncoming(const std::vector<uint8_t>& raw) {
     if (!impl_->shouldProcess(p.msgId)) return; // de-duplicate
 
     if (p.destination == impl_->name) {
-        // ── Packet is for ME ────────────────────────────────────────
+        // Incoming for me
         if (p.type == 0) {
             // HANDSHAKE: establish shared secret
             auto& ses = impl_->getSession(p.sender);
@@ -211,7 +211,7 @@ void MeshEngine::processIncoming(const std::vector<uint8_t>& raw) {
             }
         }
     } else if (p.ttl > 0) {
-        // ── Relay: not for me, TTL still alive ──────────────────────
+        // Relay
         MeshPacket fwd = p; fwd.ttl--;
         impl_->broadcast(fwd);
     }

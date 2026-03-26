@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:auto_route/auto_route.dart';
 import '../bloc/chat_bloc.dart';
 import '../widgets/chat_details.dart';
-import '../../../core/router/app_router.dart';
+import 'package:festival_mesh_app/core/router/app_router.dart';
 
 @RoutePage()
 class MainScreen extends StatefulWidget {
@@ -20,7 +20,6 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: Colors.blue.shade800,
       body: BlocBuilder<ChatBloc, ChatState>(
         builder: (context, state) {
-          // Use Switch Pattern Matching as requested
           return switch (state) {
             ChatInitial() || ChatLoading() => const Center(child: CircularProgressIndicator()),
             ChatLoaded(:final chats, :final myId, :final error) => Column(

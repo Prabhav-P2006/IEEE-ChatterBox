@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:auto_route/auto_route.dart';
 import '../../features/chat/presentation/pages/main_screen.dart';
 import '../../features/chat/presentation/pages/message_screen.dart';

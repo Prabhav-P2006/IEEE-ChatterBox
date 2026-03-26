@@ -2,15 +2,11 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 
-// --- C API Types ---
-
 typedef MeshHandle = Pointer<Void>;
 
 typedef OnSendCallback = Void Function(Pointer<Uint8> data, Int32 len, Pointer<Void> userData);
 typedef OnMessageCallback = Void Function(Pointer<Utf8> sender, Pointer<Utf8> text, Pointer<Void> userData);
 typedef OnHandshakeCallback = Void Function(Pointer<Utf8> sender, Pointer<Void> userData);
-
-// --- Native Signatures ---
 
 typedef NativeMeshCreate = MeshHandle Function(Pointer<Utf8> nodeName);
 typedef NativeMeshDestroy = Void Function(MeshHandle h);
@@ -22,8 +18,6 @@ typedef NativeMeshSetOnMessage = Void Function(MeshHandle h, Pointer<NativeFunct
 typedef NativeMeshSetOnHandshake = Void Function(MeshHandle h, Pointer<NativeFunction<OnHandshakeCallback>> cb, Pointer<Void> userData);
 typedef NativeMeshGetPublicKeyHex = Pointer<Utf8> Function(MeshHandle h);
 typedef NativeMeshGetSafetyNumber = Pointer<Utf8> Function(MeshHandle h, Pointer<Utf8> peer);
-
-// --- Dart Signatures ---
 
 typedef MeshCreate = MeshHandle Function(Pointer<Utf8> nodeName);
 typedef MeshDestroy = void Function(MeshHandle h);
@@ -69,6 +63,7 @@ class MeshFFI {
     if (Platform.isAndroid) return DynamicLibrary.open('libfestivalmesh.so');
     if (Platform.isIOS) return DynamicLibrary.process();
     if (Platform.isLinux) return DynamicLibrary.open('libfestivalmesh.so');
+    if (Platform.isMacOS) return DynamicLibrary.open('libfestivalmesh.dylib');
     throw UnsupportedError('Platform not supported');
   }
 }

@@ -1,59 +1,20 @@
-# bluez-dbus-cpp
+# Festival Mesh: Secure P2P Multi-Hop Messenger
 
-Depending on the beautiful `sdbus-cpp` library, this library features class implementations for the most important LE-Advertisement and Gatt functions .
+A decentralized "Zero-Bar" messenger for festivals and dense crowds where cell service is non-existent. It roots messages through a multi-hop mesh network using only Bluetooth and other local P2P transports.
 
-## Dependencies
+### Architecture
 
-- cmake
-- build-essentials
-- sdbus-cpp library https://github.com/Kistler-Group/sdbus-cpp
+The system is split into two layers:
+- **Mobile Frontend (`/festival_mesh_app`)**: Built with Flutter. Handles the UI, OS permissions, and the physical P2P transport layer (Nearby Connections / Multipeer Connectivity).
+- **Core Engine (`/festival-mesh-core`)**: Pure C++ library. Handles the mesh routing logic, packet fragmentation, and end-to-end encryption. FFI is used to bridge the two.
 
-Please note that in order to comply with the LPGL license of sdbus-cpp, it is important to link against it dynamically.
+### Security (E2EE)
+Messages are fully encrypted end-to-end (X25519 + AES-GCM). Key exchange happens either via QR code scanning or through safety-number verification for in-mesh handshakes.
 
-Kistler have provided bitbake recipes for integrating `sdbus-cpp` into a yocto build. https://github.com/Kistler-Group/sdbus-cpp/blob/master/docs/using-sdbus-c++.md#yocto
+### Getting Started
+1. Build the C++ core: `cd festival-mesh-core && mkdir build && cd build && cmake .. && make`
+2. Run the Flutter app: `cd festival_mesh_app && flutter run`
 
-## Building (with example)
-
-```
-mkdir build
-cd build
-cmake .. -DBUILD_EXAMPLE=1
-make -j 4
-```
-
-To build the socket example:
-
-```
-cmake .. -DBUILD_EXAMPLE_ELL=1
-```
-
-## Running example
-
-From the `build` directory
-
-```
-./bin/example
-```
-
-## Building for install
-```
-mkdir build
-cd build
-cmake ..
-make -j 4
-```
-
-## Installing
-
-```
-sudo make install
-```
-
-## Using it in your project
-
-In your CMakeLists.txt
-
-```
-find_package(bluez-dbus-cpp REQUIRED)
-target_link_libraries( your-target-name PRIVATE bluez-dbus-cpp )
-```
+### Folder Structure
+- `festival_mesh_app/`: UI and Transport (Flutter)
+- `festival-mesh-core/`: Mesh Engine and Crypto (C++)

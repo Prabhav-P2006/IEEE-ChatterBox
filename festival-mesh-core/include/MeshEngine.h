@@ -22,30 +22,20 @@ namespace festival::mesh {
  *   [N]  payload
  */
 struct MeshPacket {
-    uint8_t  ttl       = 7;   // Festival-safe default (covers any venue in ≤5 hops)
-    uint32_t msgId     = 0;   // Unique per link-layer broadcast
-    uint32_t groupId   = 0;   // Shared across fragments of the same message
+    uint8_t  ttl       = 7;
+    uint32_t msgId     = 0;
+    uint32_t groupId   = 0;
     uint8_t  fragIdx   = 0;
     uint8_t  fragTotal = 1;
     std::string sender;
     std::string destination;
-    uint8_t  type      = 0;   // 0=handshake, 1=message
+    uint8_t  type      = 0; // 0: handshake, 1: message
     std::vector<uint8_t> payload;
 
     std::vector<uint8_t> serialize() const;
     static MeshPacket deserialize(const std::vector<uint8_t>& data);
 };
 
-/**
- * @brief Transport-agnostic mesh routing engine.
- *
- * This class does NOT know about BLE, UDP, or any transport.
- * Call processIncoming() with raw bytes received from any transport.
- * Use the packet-ready callback to send bytes out on any transport.
- *
- * This design makes it callable from Flutter (dart:ffi) where Flutter
- * owns the BLE transport layer.
- */
 class MeshEngine {
 public:
     // Callbacks
