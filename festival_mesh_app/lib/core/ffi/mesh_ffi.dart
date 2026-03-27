@@ -64,7 +64,13 @@ class MeshFFI {
     if (Platform.isAndroid) return DynamicLibrary.open('libfestivalmesh.so');
     if (Platform.isIOS) return DynamicLibrary.process();
     if (Platform.isLinux) return DynamicLibrary.open('libfestivalmesh.so');
-    if (Platform.isMacOS) return DynamicLibrary.open('libfestivalmesh.dylib');
+    if (Platform.isMacOS) {
+      try {
+        return DynamicLibrary.open('libfestivalmesh.dylib');
+      } catch (_) {
+        return DynamicLibrary.open('/Users/prabhavp/IEEE-ChatterBox/festival_mesh_core/build/libfestivalmesh.dylib');
+      }
+    }
     throw UnsupportedError('Platform not supported');
   }
 }

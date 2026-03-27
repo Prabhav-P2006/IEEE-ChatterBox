@@ -25,11 +25,29 @@ class MeshDataSourceImpl implements ChatDataSource {
   MeshHandle? _mockBobHandle;
 
   @override
+  @override
   void spawnMockPeer() {
     final namePtr = "MockBob".toNativeUtf8();
     _mockBobHandle = _ffi.create(namePtr);
     malloc.free(namePtr);
+
+    // Set Bob's callbacks too
+    _ffi.setOnMessage(_mockBobHandle!, _onMsgCallable.nativeFunction, Pointer.fromAddress(1));
+    _ffi.setOnSend(_mockBobHandle!, _onSendCallable.nativeFunction, Pointer.fromAddress(1));
+    _ffi.setOnHandshake(_mockBobHandle!, _onHsCallable.nativeFunction, Pointer.fromAddress(1));
+
     sendHandshake("MockBob");
+
+    // Auto-reply greeting from Bob to Alice
+    Future.delayed(const Duration(seconds: 2), () {
+      if (_mockBobHandle != null) {
+        final destPtr = myName.toNativeUtf8();
+        final msgPtr = "Greetings! The C++ Mesh Engine is working with Monocypher 🚀".toNativeUtf8();
+        _ffi.sendMessage(_mockBobHandle!, destPtr, msgPtr);
+        malloc.free(destPtr);
+        malloc.free(msgPtr);
+      }
+    });
   }
 
   @override
@@ -48,10 +66,12 @@ class MeshDataSourceImpl implements ChatDataSource {
   late final NativeCallable<OnHandshakeCallback> _onHsCallable;
 
   MeshDataSourceImpl(this.myName) {
+    print("💎 MeshDataSourceImpl: INITIALIZING node '$myName'...");
     _instance = this;
     final namePtr = myName.toNativeUtf8();
     _handle = _ffi.create(namePtr);
     malloc.free(namePtr);
+    print("💎 MeshHandle created: $_handle");
 
     _onMsgCallable = NativeCallable<OnMessageCallback>.isolateLocal(
       _onMsgNative,
@@ -69,14 +89,14 @@ class MeshDataSourceImpl implements ChatDataSource {
       },
     );
 
-    _setupCallbacks();
+    _initCallbacks();
     _transport.start();
   }
 
-  void _setupCallbacks() {
-    _ffi.setOnMessage(_handle, _onMsgCallable.nativeFunction, nullptr);
-    _ffi.setOnSend(_handle, _onSendCallable.nativeFunction, nullptr);
-    _ffi.setOnHandshake(_handle, _onHsCallable.nativeFunction, nullptr);
+  void _initCallbacks() {
+    _ffi.setOnMessage(_handle, _onMsgCallable.nativeFunction, Pointer.fromAddress(0));
+    _ffi.setOnSend(_handle, _onSendCallable.nativeFunction, Pointer.fromAddress(0));
+    _ffi.setOnHandshake(_handle, _onHsCallable.nativeFunction, Pointer.fromAddress(0));
   }
 
   static void _onMsgNative(
@@ -84,6 +104,9 @@ class MeshDataSourceImpl implements ChatDataSource {
     Pointer<Utf8> text,
     Pointer<Void> userData,
   ) {
+    // Only Alice (main handle) adds to the UI stream
+    if (userData.address != 0) return;
+
     final s = sender.toDartString();
     final t = text.toDartString();
     _instance?._messageController.add(
@@ -97,23 +120,30 @@ class MeshDataSourceImpl implements ChatDataSource {
     Pointer<Void> userData,
   ) {
     final bytes = data.asTypedList(len).toList();
-    _instance?._transport.broadcast(bytes);
-    MeshLogger().log("📡 Broadcating mesh packet (${len} bytes)");
+    final isBob = userData.address == 1;
 
-    // LOOPBACK simulation:
-    // If Alice sends something, we process it as Bob if Bob exists.
+    // We only broadcast from the main handle to the real world
+    if (!isBob) {
+      _instance?._transport.broadcast(bytes);
+    }
+
+    MeshLogger().log("📡 [${isBob ? 'BOB' : 'Alice'}] Mesh packet (${len} bytes)");
+
+    // LOOPBACK simulation for single-device testing:
     if (_instance != null) {
       Future.delayed(const Duration(milliseconds: 50), () {
         final ptr = malloc<Uint8>(len);
         ptr.asTypedList(len).setAll(0, bytes);
 
-        // Let Bob process what Alice sent
-        if (_instance!._mockBobHandle != null) {
-          _instance!._ffi.processPacket(_instance!._mockBobHandle!, ptr, len);
+        if (!isBob) {
+          // Alice -> Bob
+          if (_instance!._mockBobHandle != null) {
+            _instance!._ffi.processPacket(_instance!._mockBobHandle!, ptr, len);
+          }
+        } else {
+          // Bob -> Alice
+          _instance!._ffi.processPacket(_instance!._handle, ptr, len);
         }
-
-        // Let Alice "receive" her own broadcast (standard loopback)
-        _instance!.processPacket(bytes);
 
         malloc.free(ptr);
       });
@@ -122,7 +152,8 @@ class MeshDataSourceImpl implements ChatDataSource {
 
   static void _onHsNative(Pointer<Utf8> sender, Pointer<Void> userData) {
     final s = sender.toDartString();
-    MeshLogger().log("🤝 FFI HS COMPLETE: Session with $s");
+    final isBob = userData.address == 1;
+    MeshLogger().log("🤝 [${isBob ? 'BOB' : 'Alice'}] HS COMPLETE with $s");
   }
 
   @override

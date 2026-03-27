@@ -38,7 +38,7 @@ android {
 
     externalNativeBuild {
         cmake {
-            path = file("src/main/cpp/CMakeLists.txt")
+            path = file("../../../festival_mesh_core/CMakeLists.txt")
             version = "3.22.1"
         }
     }

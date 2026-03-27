@@ -6,7 +6,7 @@ import 'package:festival_mesh_app/core/ffi/mesh_ffi.dart';
 
 void main() {
   late MeshFFI ffi;
-  final dylibPath = '${Directory.current.parent.path}/festival-mesh-core/build/libfestivalmesh.dylib';
+  final dylibPath = '${Directory.current.parent.path}/festival_mesh_core/build/libfestivalmesh.dylib';
 
   setUpAll(() {
     if (!File(dylibPath).existsSync()) {

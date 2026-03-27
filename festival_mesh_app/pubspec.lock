@@ -217,14 +217,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.7"
-  csslib:
-    dependency: transitive
-    description:
-      name: csslib
-      sha256: "09bad715f418841f976c77db72d5398dc1253c21fb9c0c7f0b0b985860b2d58e"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.2"
   cupertino_icons:
     dependency: "direct main"
     description:
@@ -464,14 +456,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.0"
-  html:
-    dependency: transitive
-    description:
-      name: html
-      sha256: "6d1264f2dffa1b1101c25a91dff0dc2daee4c18e87cd8538729773c073dbf602"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.15.6"
   http_multi_server:
     dependency: transitive
     description:
@@ -909,22 +893,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  sodium:
-    dependency: transitive
-    description:
-      name: sodium
-      sha256: "93d7c8d9af1f57cbd1ddeeb815902d3e0c1e1c8579a78cf229bcd97e1714f061"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.4"
-  sodium_libs:
-    dependency: "direct main"
-    description:
-      name: sodium_libs
-      sha256: "6cca60769c68d357a28dbc64bc0704bf6bcbff9d0459ca9a182c10db475bbba5"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.5+2"
   source_gen:
     dependency: transitive
     description:
@@ -997,14 +965,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
-  synchronized:
-    dependency: transitive
-    description:
-      name: synchronized
-      sha256: c254ade258ec8282947a0acbbc90b9575b4f19673533ee46f2f6e9b3aeefd7c0
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.0"
   term_glyph:
     dependency: transitive
     description:
